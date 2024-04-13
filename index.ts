@@ -51,7 +51,7 @@ const initializeServer = async () => {
     retriever,
   });
 
-  const query = "what are Physical Standards for Parcels?";
+  const query = "what is dopamine?";
 
   // Query
   const response = await queryEngine.query({

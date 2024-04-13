@@ -353,7 +353,7 @@ var require_ollama_app = __commonJS({
       const queryEngine = index.asQueryEngine({
         retriever
       });
-      const query = "what are Physical Standards for Parcels?";
+      const query = "what is dopamine?";
       const response = yield queryEngine.query({
         query
       });
