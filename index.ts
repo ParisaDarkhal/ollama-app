@@ -5,8 +5,16 @@ import express, { Express, Request, Response } from "express";
 import { initObservability } from "./src/observability";
 import chatRouter from "./src/routes/chat.route";
 //////////
-import fs from "fs/promises";
-import { Document, VectorStoreIndex } from "llamaindex";
+import {
+  Ollama,
+  Settings,
+  SimpleDirectoryReader,
+  VectorStoreIndex,
+} from "llamaindex";
+const ollamaLLM = new Ollama({ model: "gemma:2b", temperature: 0.75 });
+Settings.llm = ollamaLLM;
+Settings.embedModel = ollamaLLM;
+
 //////////
 
 const app: Express = express();
@@ -36,12 +44,21 @@ if (isDevelopment) {
 }
 //////////////////////////////////
 const initializeServer = async () => {
-  const essay = await fs.readFile("./data/101.pdf", "utf-8");
+  // const essay = await fs.readFile("./data/101.pdf", "utf-8");
+  //
+  // const document = new Document({
+  //   text: "There was a farmer who had a dog and bingo was the dog's name.",
+  //   id_: "essay",
+  // });
+  // console.log(document);
 
-  const document = new Document({ text: essay, id_: "essay" });
+  // Load our data from a local directory
+  const documents = await new SimpleDirectoryReader().loadData({
+    directoryPath: "./data",
+  });
 
   // Load and index documents
-  const index = await VectorStoreIndex.fromDocuments([document]);
+  const index = await VectorStoreIndex.fromDocuments(documents);
 
   // get retriever
   const retriever = index.asRetriever();
@@ -51,7 +68,7 @@ const initializeServer = async () => {
     retriever,
   });
 
-  const query = "what is dopamine?";
+  const query = "what was the dog's name?";
 
   // Query
   const response = await queryEngine.query({
@@ -65,7 +82,7 @@ const initializeServer = async () => {
   app.use(express.text());
 
   app.get("/", (req: Request, res: Response) => {
-    res.send("LlamaIndex Express Server");
+    res.send("Ollama Express Server");
   });
 
   app.use("/api/chat", chatRouter);

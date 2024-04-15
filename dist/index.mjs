@@ -317,12 +317,19 @@ var init_chat_route = __esm({
 import cors from "cors";
 import "dotenv/config";
 import express2 from "express";
-import fs from "fs/promises";
-import { Document, VectorStoreIndex as VectorStoreIndex2 } from "llamaindex";
+import {
+  Ollama,
+  Settings,
+  SimpleDirectoryReader,
+  VectorStoreIndex as VectorStoreIndex2
+} from "llamaindex";
 var require_ollama_app = __commonJS({
   "index.ts"(exports) {
     init_observability();
     init_chat_route();
+    var ollamaLLM = new Ollama({ model: "gemma:2b", temperature: 0.75 });
+    Settings.llm = ollamaLLM;
+    Settings.embedModel = ollamaLLM;
     var app = express2();
     var port = parseInt(process.env.PORT || "8000");
     var env = process.env["NODE_ENV"];
@@ -346,21 +353,22 @@ var require_ollama_app = __commonJS({
       console.warn("Production CORS origin not set, defaulting to no CORS.");
     }
     var initializeServer = () => __async(exports, null, function* () {
-      const essay = yield fs.readFile("./data/101.pdf", "utf-8");
-      const document = new Document({ text: essay, id_: "essay" });
-      const index = yield VectorStoreIndex2.fromDocuments([document]);
+      const documents = yield new SimpleDirectoryReader().loadData({
+        directoryPath: "./data"
+      });
+      const index = yield VectorStoreIndex2.fromDocuments(documents);
       const retriever = index.asRetriever();
       const queryEngine = index.asQueryEngine({
         retriever
       });
-      const query = "what is dopamine?";
+      const query = "what was the dog's name?";
       const response = yield queryEngine.query({
         query
       });
       console.log(response.response);
       app.use(express2.text());
       app.get("/", (req, res) => {
-        res.send("LlamaIndex Express Server");
+        res.send("Ollama Express Server");
       });
       app.use("/api/chat", chat_route_default);
       app.listen(port, () => {
