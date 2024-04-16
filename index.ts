@@ -10,11 +10,12 @@ import {
   Settings,
   SimpleDirectoryReader,
   VectorStoreIndex,
+  storageContextFromDefaults,
 } from "llamaindex";
+
 const ollamaLLM = new Ollama({ model: "gemma:2b", temperature: 0.75 });
 Settings.llm = ollamaLLM;
 Settings.embedModel = ollamaLLM;
-
 //////////
 
 const app: Express = express();
@@ -43,22 +44,32 @@ if (isDevelopment) {
   console.warn("Production CORS origin not set, defaulting to no CORS.");
 }
 //////////////////////////////////
+
 const initializeServer = async () => {
-  // const essay = await fs.readFile("./data/101.pdf", "utf-8");
-  //
-  // const document = new Document({
-  //   text: "There was a farmer who had a dog and bingo was the dog's name.",
-  //   id_: "essay",
-  // });
-  // console.log(document);
+  // const path = "./data/101.pdf";
+  // try {
+  //   const essay = await fs.promises.readFile(path, "utf-8");
+  //    //
+  //   const document = new Document({
+  //     text: essay,
+  //     id_: path,
+  //   });
+  //   console.log(document);
+
+  const storageContext = await storageContextFromDefaults({
+    persistDir: "./storage",
+  });
 
   // Load our data from a local directory
   const documents = await new SimpleDirectoryReader().loadData({
     directoryPath: "./data",
   });
+  
 
   // Load and index documents
-  const index = await VectorStoreIndex.fromDocuments(documents);
+  const index = await VectorStoreIndex.fromDocuments(documents, {
+    storageContext,
+  });
 
   // get retriever
   const retriever = index.asRetriever();
@@ -68,7 +79,7 @@ const initializeServer = async () => {
     retriever,
   });
 
-  const query = "what was the dog's name?";
+  const query = "what are maximum weight and size of a parcel?";
 
   // Query
   const response = await queryEngine.query({

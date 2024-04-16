@@ -321,7 +321,8 @@ import {
   Ollama,
   Settings,
   SimpleDirectoryReader,
-  VectorStoreIndex as VectorStoreIndex2
+  VectorStoreIndex as VectorStoreIndex2,
+  storageContextFromDefaults as storageContextFromDefaults2
 } from "llamaindex";
 var require_ollama_app = __commonJS({
   "index.ts"(exports) {
@@ -353,15 +354,20 @@ var require_ollama_app = __commonJS({
       console.warn("Production CORS origin not set, defaulting to no CORS.");
     }
     var initializeServer = () => __async(exports, null, function* () {
+      const storageContext = yield storageContextFromDefaults2({
+        persistDir: "./storage"
+      });
       const documents = yield new SimpleDirectoryReader().loadData({
         directoryPath: "./data"
       });
-      const index = yield VectorStoreIndex2.fromDocuments(documents);
+      const index = yield VectorStoreIndex2.fromDocuments(documents, {
+        storageContext
+      });
       const retriever = index.asRetriever();
       const queryEngine = index.asQueryEngine({
         retriever
       });
-      const query = "what was the dog's name?";
+      const query = "what are maximum weight and size of a parcel?";
       const response = yield queryEngine.query({
         query
       });
